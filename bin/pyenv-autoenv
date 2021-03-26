@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+#
+# Summary: Create a virtualenv automatically.
+#
+# Usage: pyenv autoenv [--clear] [--local] [--name NAME] [--version VERSION]
+#
+# Create a virtualenv with sensible defaults.
+#
+# Uses the latest available cPython version by default, or the version
+# specified by the pyproject.toml file.
+#
+# The virtualenv is named after the current directory by default.
+
+set -e
+[ -n "$PYENV_DEBUG" ] && set -x
+
+# Provide pyenv completions
+if [ "$1" = "--complete" ]; then
+  echo --clear
+  echo --name
+  echo --version
+  echo --no-local
+fi
+
+usage() {
+    echo "pyenv autoenv [--clear] [--no-local] [--name NAME] [--version VERSION]";
+    exit 1;
+}
+
+# Define library functions (taken from pyenv-virtualenv)
+parse_options() {
+  OPTIONS=()
+  ARGUMENTS=()
+  local arg option index
+
+  for arg in "$@"; do
+    if [ "${arg:0:1}" = "-" ]; then
+      if [ "${arg:1:1}" = "-" ]; then
+        OPTIONS[${#OPTIONS[*]}]="${arg:2}"
+      else
+        index=1
+        while option="${arg:$index:1}"; do
+          [ -n "$option" ] || break
+          OPTIONS[${#OPTIONS[*]}]="$option"
+          index=$(($index+1))
+        done
+      fi
+    else
+      ARGUMENTS[${#ARGUMENTS[*]}]="$arg"
+    fi
+  done
+}
+
+parse_options "$@"
+for option in "${OPTIONS[@]}"; do
+  case "$option" in
+  "name" )
+    VENV_NAME="${ARGUMENTS[0]}"
+    ARGUMENTS=("${ARGUMENTS[@]:1}") # shift 1
+    ;;
+  "version" )
+    DESIRED_VENV_VERSION="${ARGUMENTS[0]}"
+    ARGUMENTS=("${ARGUMENTS[@]:1}") # shift 1
+    ;;
+  "h" | "help" )
+    usage 0
+    ;;
+  "q" | "quiet" )
+    QUIET="--quiet"
+    ;;
+  "clear" )
+    CLEAR=true
+    ;;
+  "no-local" )
+    NO_LOCAL=true
+    ;;
+  esac
+done
+
+if [ -z "${VENV_NAME}" ]; then
+  VENV_NAME=$(basename "$(pwd)");
+  echo "Picking '${VENV_NAME}' for virtualenv name";
+fi
+
+if [ -z "${DESIRED_VENV_VERSION}" ]; then
+  DESIRED_VENV_VERSION=$(python-build --definitions | grep "^\d" | grep -v -- "-dev" | tail -1)
+fi
+VENV_VERSION=$(python-build --definitions | grep "^${DESIRED_VENV_VERSION}" | tail -1)
+if [ -z "${VENV_VERSION}" ]; then
+  echo "Version ${DESIRED_VENV_VERSION} is not available"
+  exit 1
+fi
+
+echo "Using Python version ${VENV_VERSION}"
+pyenv install --skip-existing "$VENV_VERSION";
+
+if pyenv versions --bare | grep -q "^${VENV_NAME}$"; then
+  if [ -z "${CLEAR}" ]; then
+    echo "Virtualenv '${VENV_NAME}' already exists.";
+    echo "Use the flag '--clear' to recreate it.";
+    exit 0;
+  else
+    echo "Clearing previous virtualenv..."
+    pyenv virtualenv-delete -f "${VENV_NAME}";
+  fi
+fi
+
+echo "Creating new virtualenv '${VENV_NAME}'..."
+pyenv virtualenv "${VENV_VERSION}" "${VENV_NAME}";
+
+if [ -z ${NO_LOCAL} ]; then
+  echo "Setting local virtualenv '${VENV_NAME}'..."
+  pyenv local "${VENV_NAME}"
+fi

@@ -1,0 +1,7 @@
+*.class
+*.pyc
+*.pyo
+*.swo
+*.swp
+.python-version
+__pycache__
