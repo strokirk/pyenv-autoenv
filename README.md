@@ -11,6 +11,12 @@ Install using git:
 $ git clone https://github.com/strokirk/pyenv-autoenv.git $(pyenv root)/plugins/pyenv-autoenv
 ```
 
+Upgrade by removing and reinstalling, or with git:
+
+```sh
+$ git --git-dir $(pyenv root)/plugins/pyenv-autoenv/.git pull
+```
+
 ## Usage
 
 To create the virtualenv of a project, simply run `pyenv autoenv` and let
