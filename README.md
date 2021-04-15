@@ -19,10 +19,10 @@ the magic happen.
 It will create a virtualenv named after the current directory using the
 latest available Python version.
 
-To specify a specific Python version, use the `--version` flag.
+To specify a specific Python version, use the `--python` flag.
 
 ```sh
-$ pyenv autoenv --version 3.X.Y
+$ pyenv autoenv --python 3.X.Y
 ```
 
 To customize the name of the created virtualenv, use the `--name` flag.

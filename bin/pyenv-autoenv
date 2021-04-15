@@ -2,7 +2,9 @@
 #
 # Summary: Create a virtualenv automatically.
 #
-# Usage: pyenv autoenv [--clear] [--local] [--name NAME] [--version VERSION]
+# Usage: pyenv autoenv [--clear] [--local] [--name NAME] [--python PYTHON]
+#        pyenv autoenv --version
+#        pyenv autoenv --help
 #
 # Create a virtualenv with sensible defaults.
 #
@@ -11,6 +13,8 @@
 #
 # The virtualenv is named after the current directory by default.
 
+PYENV_AUTOENV_VERSION="2.0.0"
+
 set -e
 [ -n "$PYENV_DEBUG" ] && set -x
 
@@ -18,12 +22,14 @@ set -e
 if [ "$1" = "--complete" ]; then
   echo --clear
   echo --name
-  echo --version
+  echo --python
   echo --no-local
 fi
 
 usage() {
-    echo "pyenv autoenv [--clear] [--no-local] [--name NAME] [--version VERSION]";
+    echo "pyenv autoenv [--clear] [--no-local] [--name NAME] [--python PYTHON]";
+    echo "pyenv autoenv --version";
+    echo "pyenv autoenv --help";
     exit 1;
 }
 
@@ -58,15 +64,16 @@ for option in "${OPTIONS[@]}"; do
     VENV_NAME="${ARGUMENTS[0]}"
     ARGUMENTS=("${ARGUMENTS[@]:1}") # shift 1
     ;;
-  "version" )
-    DESIRED_VENV_VERSION="${ARGUMENTS[0]}"
+  "python" )
+    DESIRED_VENV_PYTHON="${ARGUMENTS[0]}"
     ARGUMENTS=("${ARGUMENTS[@]:1}") # shift 1
     ;;
   "h" | "help" )
     usage 0
     ;;
-  "q" | "quiet" )
-    QUIET="--quiet"
+  "version" )
+    echo "${PYENV_AUTOENV_VERSION}";
+    exit 0;
     ;;
   "clear" )
     CLEAR=true
@@ -82,17 +89,7 @@ if [ -z "${VENV_NAME}" ]; then
   echo "Picking '${VENV_NAME}' for virtualenv name";
 fi
 
-if [ -z "${DESIRED_VENV_VERSION}" ]; then
-  DESIRED_VENV_VERSION=$(python-build --definitions | grep "^\d" | grep -v -- "-dev" | tail -1)
-fi
-VENV_VERSION=$(python-build --definitions | grep "^${DESIRED_VENV_VERSION}" | tail -1)
-if [ -z "${VENV_VERSION}" ]; then
-  echo "Version ${DESIRED_VENV_VERSION} is not available"
-  exit 1
-fi
-
-echo "Using Python version ${VENV_VERSION}"
-pyenv install --skip-existing "$VENV_VERSION";
+VENV_PYTHON=$(/usr/bin/python3 "${BASH_SOURCE%/*}"/../libexec/detect-version.py "${DESIRED_VENV_PYTHON}")
 
 if pyenv versions --bare | grep -q "^${VENV_NAME}$"; then
   if [ -z "${CLEAR}" ]; then
@@ -105,8 +102,11 @@ if pyenv versions --bare | grep -q "^${VENV_NAME}$"; then
   fi
 fi
 
+echo "Using Python version ${VENV_PYTHON}"
+pyenv install --skip-existing "$VENV_PYTHON";
+
 echo "Creating new virtualenv '${VENV_NAME}'..."
-pyenv virtualenv "${VENV_VERSION}" "${VENV_NAME}";
+pyenv virtualenv "${VENV_PYTHON}" "${VENV_NAME}";
 
 if [ -z ${NO_LOCAL} ]; then
   echo "Setting local virtualenv '${VENV_NAME}'..."
