@@ -13,7 +13,7 @@
 #
 # The virtualenv is named after the current directory by default.
 
-PYENV_AUTOENV_VERSION="2.0.0"
+PYENV_AUTOENV_VERSION="2.1.0"
 
 set -e
 [ -n "$PYENV_DEBUG" ] && set -x

@@ -1,5 +1,9 @@
 ## Version History
 
+#### 2.1.0
+
+* Add autodetection of `setup.cfg` and `setup.py` Python version specifiers.
+
 #### 2.0.0
 
 * Add autodetection of `pyproject.toml` and `runtime.txt` Python version
