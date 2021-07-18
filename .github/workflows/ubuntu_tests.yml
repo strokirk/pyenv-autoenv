@@ -1,0 +1,24 @@
+name: ubuntu_tests
+on: [pull_request, push]
+jobs:
+  ubuntu_tests:
+    env:
+      PYENV_ROOT: /home/runner/work/pyenv/pyenv
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - 3.5.10
+    runs-on: Ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - run: |
+          sudo apt-get update && sudo apt-get install -y git
+      - run: |
+          git clone https://github.com/pyenv/pyenv.git $PYENV_ROOT
+          git clone https://github.com/pyenv/pyenv-virtualenv.git $PYENV_ROOT/plugins/pyenv-virtualenv
+          git clone https://github.com/strokirk/pyenv-autoenv.git $PYENV_ROOT/plugins/pyenv-autoenv
+          echo "$PYENV_ROOT/shims:$PYENV_ROOT/bin" >> $GITHUB_PATH
+      - run: |
+          pyenv autoenv
+          pyenv autoenv

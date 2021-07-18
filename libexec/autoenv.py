@@ -1,28 +1,77 @@
-import re
+#!/usr/bin/env python3
+import argparse
 import os
+import re
 import subprocess
-import sys
+from pathlib import Path
+
+PYENV_AUTOENV_VERSION = "2.1.0"
 
 
-def main():
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--name")
+    parser.add_argument("--python")
+    parser.add_argument("--version", action="store_true")
+    parser.add_argument("--clear", action="store_true")
+    parser.add_argument("--no-local", action="store_true")
+    parser.add_argument("-q", "--quiet", action="count")
+    args = parser.parse_args()
+
+    if args.version:
+        print(PYENV_AUTOENV_VERSION)
+        return
+
+    quiet = args.quiet or 0
+    run = subprocess.run
+    name = args.name
+
+    if not name:
+        name = Path().cwd().name
+
+    result = run(["pyenv", "versions", "--bare"], capture_output=True)
+    versions = result.stdout.decode().splitlines()
+    if name in versions:
+        if not args.clear:
+            if quiet < 1:
+                print("Virtualenv '{}' already exists. Use '--clear' to recreate it.".format(name))
+            return
+        if quiet < 1:
+            print("Clearing previous virtualenv '{}'...".format(name))
+        run(["pyenv", "virtualenv-delete", "-f", name])
+
+    python = detect_version(args.version)
+    if python not in versions:
+        print("Using Python version {}".format(python))
+        run(["pyenv", "install", "--skip-existing", python])
+
+    if quiet < 2:
+        print("Creating new virtualenv '{}' with Python {}...".format(name, python))
+    run(["pyenv", "virtualenv", python, name], capture_output=quiet > 0)
+
+    if args.no_local:
+        return
+    if quiet < 1:
+        print("Setting local virtualenv '{}'...".format(name))
+    run(["pyenv", "local", name])
+
+
+def detect_version(desired) -> str:
     definitions = get_definitions()
 
     detector = VersionDetector(definitions)
-    desired = detector.get_desired_version()
+    desired = detector.get_desired_version(desired)
     if desired:
         if desired in definitions:
-            print(desired)
-            return
+            return desired
         for definition in sorted(definitions, reverse=True):
             if re.match(desired, definition):
-                print(definition)
-                return
+                return definition
         raise SystemExit("Python '%s' not available" % desired)
 
     version = detector.get_latest_version()
     if version:
-        print(version)
-        return
+        return version
     raise SystemExit("No versions found")
 
 
@@ -30,8 +79,7 @@ class VersionDetector:
     def __init__(self, definitions):
         self.definitions = definitions
 
-    def get_desired_version(self):
-        version = None if len(sys.argv) < 2 else sys.argv[1].strip()
+    def get_desired_version(self, version=None):
         if version:
             return version
         finders = [
@@ -46,39 +94,39 @@ class VersionDetector:
                 return version
         return None
 
-    def get_latest_version(self):
+    def get_latest_version(self) -> "None | str":
         for version in sorted(self.definitions, reverse=True):
             if re.match(r"\d+\.\d+\.\d+$", version):
                 return version
         return None
 
-    def get_runtime_txt_version(self):
+    def get_runtime_txt_version(self) -> "None | str":
         prefix = "python-"
         line = _find_line_with_prefix("runtime.txt", prefix)
         if line:
             return _removeprefix(line, prefix)
         return None
 
-    def get_pyproject_version(self):
+    def get_pyproject_version(self) -> "None | str":
         # Hacky version parser that works for the most common version specifiers
         line = _find_line_with_prefix("pyproject.toml", "requires-python")
         if line:
             return self._parse_version_specifier(line)
         return None
 
-    def get_setup_py_version(self):
+    def get_setup_py_version(self) -> "None | str":
         line = _find_line_with_prefix("setup.py", "python_requires")
         if line:
             return self._parse_version_specifier(line)
         return None
 
-    def get_setup_cfg_version(self):
+    def get_setup_cfg_version(self) -> "None | str":
         line = _find_line_with_prefix("setup.cfg", "python_requires")
         if line:
             return self._parse_version_specifier(line)
         return None
 
-    def _parse_version_specifier(self, line):
+    def _parse_version_specifier(self, line) -> "None | str":
         """
         Parsers a line like `python_requires = "<=3.8"` into a
         more concrete version
@@ -99,7 +147,7 @@ class VersionDetector:
         raise SystemExit("Unimplemented version specifier: %s" % requires)
 
 
-def get_definitions():
+def get_definitions() -> list:
     result = subprocess.run(["python-build", "--definitions"], capture_output=True)
     return [line.strip() for line in result.stdout.decode().splitlines()]
 
@@ -109,9 +157,9 @@ def get_definitions():
 ###########
 
 
-def _removeprefix(s, prefix):
+def _removeprefix(s, prefix) -> str:
     if s.startswith(prefix):
-        return s[len(prefix) :]
+        return s[len(prefix):]
     return s[:]
 
 
@@ -125,9 +173,8 @@ def _find_line_with_prefix(filename, prefix):
     return None
 
 
-##########
-#  MAIN  #
-##########
-
-
-main()
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        pass
