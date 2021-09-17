@@ -1,5 +1,11 @@
 ## Version History
 
+#### 2.2.0
+
+* Add `--quiet` parameter.
+
+* Add `--clear-if-lower` parameter.
+
 #### 2.1.0
 
 * Add autodetection of `setup.cfg` and `setup.py` Python version specifiers.

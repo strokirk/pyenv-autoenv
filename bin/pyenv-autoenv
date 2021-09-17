@@ -25,10 +25,10 @@ if [ "$1" = "--complete" ]; then
 fi
 
 usage() {
-    echo "pyenv autoenv [--clear] [--no-local] [--name NAME] [--python PYTHON]";
+    echo "pyenv autoenv [--clear] [--clear-if-lower] [--no-local] [--name NAME] [--python PYTHON] [--quiet]";
     echo "pyenv autoenv --version";
     echo "pyenv autoenv --help";
     exit 1;
 }
 
-/usr/bin/python3 "${BASH_SOURCE%/*}"/../libexec/autoenv.py "$@"
+/usr/bin/env python3 "${BASH_SOURCE%/*}"/../libexec/autoenv.py "$@"

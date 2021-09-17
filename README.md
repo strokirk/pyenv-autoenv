@@ -42,3 +42,10 @@ To recreate the virtualenv even if one already exists, use the `--clear` flag.
 ```sh
 $ pyenv autoenv --clear
 ```
+
+If you only want to recreate the virtualenv when you're using an older
+version than the recommended one for the proejct, use the `--clear-if-lower` flag.
+
+```sh
+$ pyenv autoenv --clear-if-lower
+```
