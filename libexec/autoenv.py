@@ -110,7 +110,7 @@ class VersionDetector:
         return None
 
     def get_latest_version(self) -> "str":
-        for version in sorted(self.definitions, reverse=True):
+        for version in reversed(self.definitions):
             if re.match(r"\d+\.\d+\.\d+$", version):  # type: ignore
                 return version  # type: ignore
         raise SystemExit("Couldn't find any usable Python versions")
@@ -216,7 +216,9 @@ def get_versions(name: str, desired_python: "str | None" = None) -> Versions:
 
 
 def get_installed_versions() -> "list[str]":
-    return _get_command_output(["pyenv", "versions", "--bare"]).splitlines()
+    natsort = lambda s: [int(t) if t.isdigit() else t.lower() for t in re.split('(\d+)', s)]
+    sorted_list = sorted(_get_command_output(["pyenv", "versions", "--bare", "--skip-aliases"]).splitlines(), key=natsort)
+    return sorted_list
 
 
 def get_definitions() -> "list[str]":
