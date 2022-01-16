@@ -2,7 +2,7 @@
 #
 # Summary: Create a virtualenv automatically.
 #
-# Usage: pyenv autoenv [--clear] [--local] [--name NAME] [--python PYTHON]
+# Usage: pyenv autoenv [--clear] [--no-local] [--name NAME] [--python PYTHON]
 #        pyenv autoenv --version
 #        pyenv autoenv --help
 #
