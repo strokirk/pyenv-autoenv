@@ -1,5 +1,9 @@
 ## Version History
 
+#### 2.2.1
+
+* Fix autoenv not picking up `3.10+` as the "latest python version".
+
 #### 2.2.0
 
 * Add `--quiet` parameter.

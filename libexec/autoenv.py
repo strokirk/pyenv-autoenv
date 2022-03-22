@@ -110,9 +110,11 @@ class VersionDetector:
         return None
 
     def get_latest_version(self) -> "str":
-        for version in sorted(self.definitions, reverse=True):
-            if re.match(r"\d+\.\d+\.\d+$", version):  # type: ignore
-                return version  # type: ignore
+        defs = [d for d in self.definitions if re.match(r"\d+\.\d+\.\d+$", d)]
+        if defs:
+            defs = [tuple(map(int, d.split("."))) for d in defs]
+            defs.sort(reverse=True)
+            return ".".join(map(str, defs[0]))
         raise SystemExit("Couldn't find any usable Python versions")
 
     def get_runtime_txt_version(self) -> "None | str":
