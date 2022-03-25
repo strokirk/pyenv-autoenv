@@ -42,6 +42,19 @@ class TestVersionDetection(unittest.TestCase):
         with self.assertRaises(SystemExit):
             autoenv.get_versions("test-env", "3.99")
 
+    @mock.patch("autoenv.get_definitions", mock.Mock(return_value=[
+        "3.10.2",
+        "3.11-dev",
+        "3.11.0a4",
+        "3.9",
+        "pypy-3.9",
+    ]))
+    def test_latest_version(self):
+        res = autoenv.get_versions("test-env")
+        self.assertEqual(res.desired, "3.10.2")
+        self.assertEqual(res.current, None)
+
+
 
 class TestVersionDetectionWithCurrent(unittest.TestCase):
     def setUp(self):

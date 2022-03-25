@@ -113,7 +113,7 @@ class VersionDetector:
         for version in reversed(self.definitions):
             if re.match(r"\d+\.\d+\.\d+$", version):  # type: ignore
                 return version  # type: ignore
-        raise SystemExit("Couldn't find any usable Python versions")
+        aise SystemExit("Couldn't find any usable Python versions")
 
     def get_runtime_txt_version(self) -> "None | str":
         prefix = "python-"
