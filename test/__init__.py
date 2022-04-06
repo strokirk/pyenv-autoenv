@@ -18,7 +18,19 @@ class TestVersionDetection(unittest.TestCase):
         self.tmpdir = stack.enter_context(tempfile.TemporaryDirectory())
         stack.enter_context(chdir(self.tmpdir))
 
-        self.mock_get_versions = stack.enter_context(mock.patch("autoenv.get_installed_versions"))
+        self.mock_get_versions = stack.enter_context(mock.patch("autoenv.get_installed_versions", automock=True))
+
+        self.mock_get_definitions = stack.enter_context(mock.patch("autoenv.get_definitions", automock=True))
+        self.mock_get_definitions.return_value = [
+            "3.11-dev",
+            "3.9.4",
+            "3.8.5",
+            "3.8.9",
+            "3.10.2",
+            "3.11.0a4",
+            "3.9",
+            "pypy-3.9",
+        ]
 
     def test_setup_cfg(self):
         Path("setup.cfg").write_text('python_requires="3.9.4"\n')
@@ -42,13 +54,6 @@ class TestVersionDetection(unittest.TestCase):
         with self.assertRaises(SystemExit):
             autoenv.get_versions("test-env", "3.99")
 
-    @mock.patch("autoenv.get_definitions", mock.Mock(return_value=[
-        "3.10.2",
-        "3.11-dev",
-        "3.11.0a4",
-        "3.9",
-        "pypy-3.9",
-    ]))
     def test_latest_version(self):
         res = autoenv.get_versions("test-env")
         self.assertEqual(res.desired, "3.10.2")
@@ -66,6 +71,10 @@ class TestVersionDetectionWithCurrent(unittest.TestCase):
 
         self.mock_get_versions = stack.enter_context(mock.patch("autoenv.get_installed_versions"))
         self.mock_get_versions.return_value = ["test-env"]
+
+        self.mock_get_definitions = stack.enter_context(mock.patch("autoenv.get_definitions", automock=True))
+        self.mock_get_definitions.return_value = ["3.7.0"]
+
         Path("pyproject.toml").write_text('requires-python = "3.7.0"\n')
 
     def test_desired_version_is_specified_when_lower(self):
