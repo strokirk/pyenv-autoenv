@@ -2,7 +2,7 @@
 #
 # Summary: Create a virtualenv automatically.
 #
-# Usage: pyenv autoenv [--clear] [--local] [--name NAME] [--python PYTHON]
+# Usage: pyenv autoenv [--clear] [--no-local] [--name NAME] [--python PYTHON]
 #        pyenv autoenv --version
 #        pyenv autoenv --help
 #
@@ -19,9 +19,12 @@ set -e
 # Provide pyenv completions
 if [ "$1" = "--complete" ]; then
   echo --clear
+  echo --clear-if-lower
   echo --name
   echo --python
   echo --no-local
+  echo --quiet
+  exit 0;
 fi
 
 usage() {
