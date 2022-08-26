@@ -15,8 +15,7 @@ class TestVersionDetection(unittest.TestCase):
         stack = ExitStack()
         self.addCleanup(stack.close)
 
-        self.tmpdir = stack.enter_context(tempfile.TemporaryDirectory())
-        stack.enter_context(chdir(self.tmpdir))
+        stack.enter_context(chtmpdir())
 
         self.mock_get_versions = stack.enter_context(mock.patch("autoenv.get_installed_versions", automock=True))
 
@@ -66,34 +65,47 @@ class TestVersionDetectionWithCurrent(unittest.TestCase):
         stack = ExitStack()
         self.addCleanup(stack.close)
 
-        self.tmpdir = stack.enter_context(tempfile.TemporaryDirectory())
-        stack.enter_context(chdir(self.tmpdir))
+        stack.enter_context(chtmpdir())
+        Path("pyproject.toml").write_text('requires-python = "3.10.0"\n')
 
-        self.mock_get_versions = stack.enter_context(mock.patch("autoenv.get_installed_versions"))
+        patch = lambda target: stack.enter_context(mock.patch(target, automock=True))
+
+        self.mock_get_versions = patch("autoenv.get_installed_versions")
         self.mock_get_versions.return_value = ["test-env"]
 
-        self.mock_get_definitions = stack.enter_context(mock.patch("autoenv.get_definitions", automock=True))
-        self.mock_get_definitions.return_value = ["3.7.0"]
+        self.mock_get_definitions = patch("autoenv.get_definitions")
+        self.mock_get_definitions.return_value = ["3.10.0"]
 
-        Path("pyproject.toml").write_text('requires-python = "3.7.0"\n')
+        self.mock_current = patch("autoenv.get_venv_python_version")
 
     def test_desired_version_is_specified_when_lower(self):
-        with mock.patch("autoenv.get_venv_python_version", return_value="3.6"):
-            res = autoenv.get_versions("test-env")
-            self.assertEqual(res.current, "3.6")
-            self.assertEqual(res.desired, "3.7.0")
+        self.mock_current.return_value = "3.9"
+
+        res = autoenv.get_versions("test-env")
+        self.assertEqual(res.current, "3.9")
+        self.assertEqual(res.desired, "3.10.0")
+        self.assertTrue(res.current_is_lower)
 
     def test_desired_version_is_specified_when_equal(self):
-        with mock.patch("autoenv.get_venv_python_version", return_value="3.7"):
-            res = autoenv.get_versions("test-env")
-            self.assertEqual(res.current, "3.7")
-            self.assertEqual(res.desired, "3.7.0")
+        self.mock_current.return_value = "3.10"
+
+        res = autoenv.get_versions("test-env")
+        self.assertEqual(res.current, "3.10")
+        self.assertEqual(res.desired, "3.10.0")
 
     def test_desired_version_is_current_when_higher(self):
-        with mock.patch("autoenv.get_venv_python_version", return_value="3.8"):
-            res = autoenv.get_versions("test-env")
-            self.assertEqual(res.current, "3.8")
-            self.assertEqual(res.desired, "3.8")
+        self.mock_current.return_value = "3.11"
+
+        res = autoenv.get_versions("test-env")
+        self.assertEqual(res.current, "3.11")
+        self.assertEqual(res.desired, "3.11")
+
+
+@contextmanager
+def chtmpdir():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with chdir(tmpdir):
+            yield Path(tmpdir)
 
 
 @contextmanager

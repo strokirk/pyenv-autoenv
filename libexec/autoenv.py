@@ -164,7 +164,8 @@ class VersionSpec:
             raise SystemExit("Unimplemented version specifier: %s" % spec)
 
     def is_lower(self, version):
-        return version.split(".") < self.optimal.split(".")
+        toints = lambda v: list(map(int, v.split(".")))
+        return toints(version) < toints(self.optimal)
 
     def __repr__(self):
         return "<VersionSpec({})>".format(self.spec)
