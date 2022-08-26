@@ -6,7 +6,7 @@ import re
 import subprocess
 from pathlib import Path
 
-PYENV_AUTOENV_VERSION = "2.2.0"
+PYENV_AUTOENV_VERSION = "2.2.2"
 
 
 def main() -> None:

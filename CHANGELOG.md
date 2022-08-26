@@ -2,6 +2,13 @@
 
 #### 2.2.1
 
+* Fix autoenv not working when run in a directory with a non-existent
+    python version specified in a .python-version file. This would cause
+    autoenv to try to run the "current" python version, which would
+    obviously fail.
+
+#### 2.2.1
+
 * Fix autoenv not picking up `3.10+` as the "latest python version".
 
 #### 2.2.0

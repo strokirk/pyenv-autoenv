@@ -31,4 +31,4 @@ usage() {
     exit 1;
 }
 
-/usr/bin/env python3 "${BASH_SOURCE%/*}"/../libexec/autoenv.py "$@"
+/usr/bin/python3 "${BASH_SOURCE%/*}"/../libexec/autoenv.py "$@"
